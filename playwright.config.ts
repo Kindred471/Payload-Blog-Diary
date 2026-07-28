@@ -6,6 +6,8 @@ import { defineConfig, devices } from '@playwright/test'
  */
 import 'dotenv/config'
 
+process.env.DATABASE_URL = 'file:./e2e-payload-blog.db'
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -34,7 +36,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm dev',
+    command: 'cross-env DATABASE_URL=file:./e2e-payload-blog.db DIARY_OWNER_ID=1 pnpm dev',
     reuseExistingServer: true,
     url: 'http://localhost:3000',
   },

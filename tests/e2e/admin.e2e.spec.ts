@@ -32,6 +32,12 @@ test.describe('Admin Panel', () => {
     await expect(listViewArtifact).toBeVisible()
   })
 
+  test('can navigate to private diaries', async () => {
+    await page.goto('http://localhost:3000/admin/collections/diaries')
+    await expect(page).toHaveURL('http://localhost:3000/admin/collections/diaries')
+    await expect(page.locator('h1', { hasText: '日记' }).first()).toBeVisible()
+  })
+
   test('can navigate to edit view', async () => {
     await page.goto('http://localhost:3000/admin/collections/pages/create')
     await expect(page).toHaveURL(/\/admin\/collections\/pages\/[a-zA-Z0-9-_]+/)

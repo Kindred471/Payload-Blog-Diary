@@ -1,6 +1,6 @@
 # 个人日记功能需求文档
 
-> 版本：v0.3  
+> 版本：v0.4
 > 状态：需求已确认，可进入第一阶段实现  
 > 更新日期：2026-07-28
 
@@ -61,7 +61,7 @@ Payload Admin 的交互按下列方式配置：
 | `entryDate` | date | 必填且全局唯一；记录发生日期，与 `createdAt` 分开。同一天只能有一篇日记。 |
 | `content` | richText | 必填；首期仅启用段落、加粗、斜体、下划线和外链。 |
 | `tags` | array of text | 可选；同一篇内去重，首期不建立独立标签表。 |
-| `mood` | select | 可选；开心、平静、疲惫、焦虑、难过、愤怒。 |
+| `mood` | select | 可选；后台显示开心、平静、疲惫、焦虑、难过、愤怒；存储和导入值依次为 `happy`、`calm`、`tired`、`anxious`、`sad`、`angry`，以满足 GraphQL 枚举限制。 |
 | `weather` | text | 可选；简短天气描述。 |
 | `location` | text | 可选；地点。 |
 | `createdAt` / `updatedAt` | timestamps | Payload 自动维护。 |
@@ -76,7 +76,7 @@ Payload Admin 的交互按下列方式配置：
 
 - 必填字段：`title`、`entryDate`、`content`（front matter 结束后的正文）。
 - 可选字段：`tags`、`mood`、`weather`、`location`。
-- `entryDate` 格式固定为 `YYYY-MM-DD`；`mood` 只能使用上述六种值；同一批次和数据库内都不得重复日期。
+- `entryDate` 格式固定为 `YYYY-MM-DD`；`mood` 只能使用 `happy`、`calm`、`tired`、`anxious`、`sad`、`angry`；同一批次和数据库内都不得重复日期。
 - 导入先校验全部文件，再在单个事务中写入；任一文件不合格时不写入任何日记，并返回文件名与字段错误。
 - Markdown 导出使用同一格式，因此导出文件可直接再次导入。
 
@@ -157,3 +157,4 @@ Payload Admin 的交互按下列方式配置：
 | v0.1 | 2026-07-28 | 基于现有项目结构完成模块、复用、架构与澄清问题的初稿。 |
 | v0.2 | 2026-07-28 | 采纳 Admin-only、富文本、无附件、可选元数据、自由标签、导入导出、备份和日历统计需求，并拆分实现与 UI 阶段。 |
 | v0.3 | 2026-07-28 | 确认心情枚举、单日单篇、Markdown 导入格式、完整本地备份和后续文本评论注释。 |
+| v0.4 | 2026-07-28 | 将心情的存储与导入值改为 GraphQL 合法的 ASCII 枚举，后台保留中文显示。 |

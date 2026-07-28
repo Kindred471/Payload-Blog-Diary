@@ -6,6 +6,8 @@ export const testUser = {
   password: 'test',
 }
 
+const testUserID = 1
+
 /**
  * Seeds a test user for e2e admin tests.
  */
@@ -25,7 +27,7 @@ export async function seedTestUser(): Promise<void> {
   // Create fresh test user
   await payload.create({
     collection: 'users',
-    data: testUser,
+    data: { ...testUser, id: testUserID },
   })
 }
 
