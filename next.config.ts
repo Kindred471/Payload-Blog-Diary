@@ -35,6 +35,19 @@ const nextConfig: NextConfig = {
       }),
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/diaries/:slug',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'private, no-store',
+          },
+        ],
+      },
+    ]
+  },
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],

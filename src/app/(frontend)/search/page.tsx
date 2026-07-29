@@ -1,12 +1,13 @@
 import type { Metadata } from 'next/types'
 
-import { CollectionArchive } from '@/components/CollectionArchive'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 import { Search } from '@/search/Component'
 import PageClient from './page.client'
 import { CardPostData } from '@/components/Card'
+import { Card } from '@/components/Card'
+import { DiaryCard } from '@/components/DiaryCard'
 
 type Args = {
   searchParams: Promise<{
@@ -17,11 +18,13 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
   const { q: query } = await searchParamsPromise
   const payload = await getPayload({ config: configPromise })
 
-  const posts = await payload.find({
+  const results = await payload.find({
     collection: 'search',
     depth: 1,
     limit: 12,
     select: {
+      doc: true,
+      entryDate: true,
       title: true,
       slug: true,
       categories: true,
@@ -72,8 +75,26 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
         </div>
       </div>
 
-      {posts.totalDocs > 0 ? (
-        <CollectionArchive posts={posts.docs as CardPostData[]} />
+      {results.totalDocs > 0 ? (
+        <div className="container grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {results.docs.map((result) => {
+            if (result.doc.relationTo === 'diaries') {
+              return (
+                <DiaryCard
+                  key={result.id}
+                  doc={{
+                    entryDate: result.entryDate,
+                    excerpt: result.meta?.description,
+                    slug: result.slug,
+                    title: result.title,
+                  }}
+                />
+              )
+            }
+
+            return <Card key={result.id} doc={result as CardPostData} relationTo="posts" showCategories />
+          })}
+        </div>
       ) : (
         <div className="container">No results found.</div>
       )}

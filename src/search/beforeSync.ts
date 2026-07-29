@@ -7,6 +7,19 @@ export const beforeSyncWithSearch: BeforeSync = async ({ req, originalDoc, searc
 
   const { slug, id, categories, title, meta } = originalDoc
 
+  if (collection === 'diaries') {
+    return {
+      ...searchDoc,
+      entryDate: originalDoc.entryDate,
+      slug,
+      meta: {
+        title,
+        description: originalDoc.excerpt,
+      },
+      categories: [],
+    }
+  }
+
   const modifiedDoc: DocToSync = {
     ...searchDoc,
     slug,
