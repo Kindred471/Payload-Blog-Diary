@@ -1,4 +1,4 @@
-// Any setup scripts you might need go here
+import dotenv from 'dotenv'
 
-// Load .env files
-import 'dotenv/config'
+dotenv.config()
+process.env.DATABASE_URL = 'file:./diary-test-payload-blog.db'

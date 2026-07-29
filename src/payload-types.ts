@@ -70,6 +70,9 @@ export interface Config {
     pages: Page;
     posts: Post;
     media: Media;
+    'diary-media': DiaryMedia;
+    diaries: Diary;
+    'diary-annotations': DiaryAnnotation;
     categories: Category;
     users: User;
     redirects: Redirect;
@@ -92,6 +95,9 @@ export interface Config {
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'diary-media': DiaryMediaSelect<false> | DiaryMediaSelect<true>;
+    diaries: DiariesSelect<false> | DiariesSelect<true>;
+    'diary-annotations': DiaryAnnotationsSelect<false> | DiaryAnnotationsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -188,6 +194,10 @@ export interface Page {
               | ({
                   relationTo: 'posts';
                   value: number | Post;
+                } | null)
+              | ({
+                  relationTo: 'diaries';
+                  value: number | Diary;
                 } | null);
             url?: string | null;
             label: string;
@@ -441,6 +451,48 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "diaries".
+ */
+export interface Diary {
+  id: number;
+  title: string;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  excerpt: string;
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  mood?: ('happy' | 'calm' | 'tired' | 'anxious' | 'sad' | 'angry') | null;
+  weather?: string | null;
+  location?: string | null;
+  entryDate: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "CallToActionBlock".
  */
 export interface CallToActionBlock {
@@ -472,6 +524,10 @@ export interface CallToActionBlock {
             | ({
                 relationTo: 'posts';
                 value: number | Post;
+              } | null)
+            | ({
+                relationTo: 'diaries';
+                value: number | Diary;
               } | null);
           url?: string | null;
           label: string;
@@ -522,6 +578,10 @@ export interface ContentBlock {
             | ({
                 relationTo: 'posts';
                 value: number | Post;
+              } | null)
+            | ({
+                relationTo: 'diaries';
+                value: number | Diary;
               } | null);
           url?: string | null;
           label: string;
@@ -774,6 +834,39 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "diary-media".
+ */
+export interface DiaryMedia {
+  id: number;
+  alt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "diary-annotations".
+ */
+export interface DiaryAnnotation {
+  id: number;
+  diary: number | Diary;
+  comment: string;
+  selectedText: string;
+  prefix?: string | null;
+  suffix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -825,10 +918,16 @@ export interface Search {
   id: number;
   title?: string | null;
   priority?: number | null;
-  doc: {
-    relationTo: 'posts';
-    value: number | Post;
-  };
+  doc:
+    | {
+        relationTo: 'posts';
+        value: number | Post;
+      }
+    | {
+        relationTo: 'diaries';
+        value: number | Diary;
+      };
+  entryDate?: string | null;
   slug?: string | null;
   meta?: {
     title?: string | null;
@@ -973,6 +1072,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'diary-media';
+        value: number | DiaryMedia;
+      } | null)
+    | ({
+        relationTo: 'diaries';
+        value: number | Diary;
+      } | null)
+    | ({
+        relationTo: 'diary-annotations';
+        value: number | DiaryAnnotation;
       } | null)
     | ({
         relationTo: 'categories';
@@ -1306,6 +1417,61 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "diary-media_select".
+ */
+export interface DiaryMediaSelect<T extends boolean = true> {
+  alt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "diaries_select".
+ */
+export interface DiariesSelect<T extends boolean = true> {
+  title?: T;
+  content?: T;
+  excerpt?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  mood?: T;
+  weather?: T;
+  location?: T;
+  entryDate?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "diary-annotations_select".
+ */
+export interface DiaryAnnotationsSelect<T extends boolean = true> {
+  diary?: T;
+  comment?: T;
+  selectedText?: T;
+  prefix?: T;
+  suffix?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "categories_select".
  */
 export interface CategoriesSelect<T extends boolean = true> {
@@ -1520,6 +1686,7 @@ export interface SearchSelect<T extends boolean = true> {
   title?: T;
   priority?: T;
   doc?: T;
+  entryDate?: T;
   slug?: T;
   meta?:
     | T
@@ -1641,6 +1808,10 @@ export interface Header {
             | ({
                 relationTo: 'posts';
                 value: number | Post;
+              } | null)
+            | ({
+                relationTo: 'diaries';
+                value: number | Diary;
               } | null);
           url?: string | null;
           label: string;
@@ -1670,6 +1841,10 @@ export interface Footer {
             | ({
                 relationTo: 'posts';
                 value: number | Post;
+              } | null)
+            | ({
+                relationTo: 'diaries';
+                value: number | Diary;
               } | null);
           url?: string | null;
           label: string;
@@ -1752,6 +1927,10 @@ export interface TaskSchedulePublish {
       | ({
           relationTo: 'posts';
           value: number | Post;
+        } | null)
+      | ({
+          relationTo: 'diaries';
+          value: number | Diary;
         } | null);
     global?: string | null;
     user?: (number | null) | User;

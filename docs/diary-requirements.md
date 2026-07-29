@@ -1,26 +1,26 @@
 # 个人日记功能需求文档
 
-> 版本：v0.3  
-> 状态：需求已确认，可进入第一阶段实现  
+> 版本：v0.6
+> 状态：公开目录、受保护正文与双媒体库方案已确认  
 > 更新日期：2026-07-28
 
 ## 1. 目标与边界
 
-在现有 Payload Blog 中增加一个只属于日记所有者的私密日记。日记不是博客文章：不会出现在公开页面、搜索结果、站点地图、RSS、预览链接或公开媒体目录中。
+在现有 Payload Blog 中增加一种与博客相同的内容类型：日记可拥有 `slug`、草稿/发布、归档页、链接、SEO 和版本记录。访客可浏览已发布的日记目录和摘要，但日记正文与日记媒体只允许管理员读取。
 
-首期目标是让唯一管理员在 Payload Admin 中安全地记录、查看、编辑、检索和删除自己的文字日记。日记不提供独立前台页面。首期不做分享、多用户协作、公开发布、AI 总结和附件上传；这些功能会扩大隐私风险，等实际需要再加。
+首期目标是让唯一管理员在 Payload Admin 中编写日记，在前台提供公开目录与受保护详情页。访客进入详情页时只能看到公开摘要和权限提示；管理员登录后在同一 URL 查看完整正文。首期不做分享、多用户协作和 AI 总结。
 
 ## 2. 完整日记功能的模块
 
 | 模块 | 首期 | 说明 |
 | --- | --- | --- |
-| 身份与访问 | 必须 | 仅指定所有者可读取、创建、修改、删除日记。 |
+| 身份与访问 | 必须 | 管理员可创建、修改、删除和读取完整日记；访客仅能读取已发布日记的公开摘要。 |
 | 日记编辑 | 必须 | 标题、日记日期、富文本正文、编辑、删除。 |
-| 日记浏览 | 必须 | Payload Admin 中按时间倒序列表、单篇详情、分页。 |
-| 检索与筛选 | 必须 | 标题和正文关键词检索；按日期范围、标签筛选。 |
+| 日记浏览 | 必须 | 后台管理列表、公开归档、受保护详情页和分页。 |
+| 检索与筛选 | 必须 | 管理员可检索标题和正文；访客只能检索已发布日记的标题与公开摘要。 |
 | 组织 | 必须 | 自由输入标签；心情、天气、地点为可选字段。 |
-| 数据保护 | 必须 | 后端访问控制、禁止公开索引、版本保留，以及数据库备份。 |
-| 附件 | 不纳入首期 | 现有媒体文件是公开静态文件，不能用于私密日记。 |
+| 数据保护 | 必须 | 后端字段访问控制、正文和日记媒体不进入公开索引、版本保留，以及数据库备份。 |
+| 媒体与链接 | 必须 | 博客使用现有公开 `Media`；日记正文使用私有 `DiaryMedia`；公开目录和详情入口可被站点链接引用。 |
 | 数据导入导出 | 第二期 | 批量导入、Markdown 导出。 |
 | 日历与统计 | 第三期 | 日历视图、连续记录和统计，需要定制 Payload Admin UI。 |
 | 文本评论注释 | 第四期 | 选中日记文字添加私有评论；悬停高亮文字显示评论卡片和评论日期。 |
@@ -31,25 +31,34 @@
 | --- | --- | --- | --- |
 | Payload 登录与 JWT Cookie | `src/collections/Users/index.ts`、`src/utilities/getMeUser.ts` | 识别当前登录用户 | 直接复用，但需增加“日记所有者”校验。 |
 | Payload 后端访问控制 | `src/access/authenticated.ts` | 日记集合的 CRUD 授权 | 复用模式，新增严格的所有者校验，不能只使用 `authenticated`。 |
-| Lexical 富文本编辑器 | `src/fields/defaultLexical.ts` | 日记正文 | 可直接复用基础格式和外链；首期禁用内部链接、区块和上传。 |
-| Payload Admin 自动界面 | Payload collection config | 编辑表单、列表、分页、筛选、版本恢复 | 首期直接复用，无需开发独立 React 页面。 |
-| UI 基础控件 | `src/components/ui/` | 第三期后台仪表盘 | 暂不使用；日历与统计开始时再复用。 |
-| 富文本渲染 | `src/components/RichText/index.tsx` | 无 | 首期只在 Payload Admin 内编辑和阅读，不需要前台渲染器。 |
-| 列表、卡片、分页 | `src/components/Card/`、`CollectionArchive/`、`Pagination/` | 无 | 不复用；这些组件的类型和链接均面向公开 `posts`。 |
-| 站点 Header 与搜索 | `src/Header/`、`src/search/` | 无 | 不复用。它们读取公开全局数据和公开 `posts` 搜索索引。 |
-| 媒体库 | `src/collections/Media.ts` | 无 | 不复用。文件写入 `public/media` 且读取权限为公开，链接泄露即可访问。 |
-| Posts/Pages 的草稿与预览 | `src/collections/Posts/`、`src/collections/Pages/` | 可参考版本配置 | 不复用其公开发布、SEO、预览、重新验证和静态生成流程。 |
+| Lexical 富文本编辑器 | `src/fields/defaultLexical.ts` | 日记正文 | 复用基础格式、外链、内部链接和媒体区块；媒体区块改为引用 `DiaryMedia`。 |
+| Payload Admin 自动界面 | Payload collection config | 写作、可见性、发布、列表、筛选、版本恢复 | 直接复用。 |
+| UI 基础控件 | `src/components/ui/` | 公开归档与后续仪表盘 | 复用 `Input`、`Select`、`Button` 等基础控件。 |
+| 富文本渲染 | `src/components/RichText/index.tsx` | 管理员详情页正文 | 复用；访客详情页不渲染正文。 |
+| 列表、卡片、分页 | `src/components/Card/`、`CollectionArchive/`、`Pagination/` | 公开日记归档 | 复用视觉与分页模式；新建最小的 `DiaryCard`，只展示公开摘要字段。 |
+| 站点 Header 与搜索 | `src/Header/`、`src/search/` | 公共入口与检索 | Header 的现有导航配置可添加“日记”链接；只同步已发布日记的标题、日期和摘要。 |
+| 公开媒体库 | `src/collections/Media.ts` | 博客和明确公开的站点资产 | 保持现状，文件写入 `public/media`。 |
+| 日记媒体库 | 新增 `src/collections/DiaryMedia.ts` | 日记正文图片和附件 | 文件存放在 `public/` 外，只有管理员可通过 Payload 受控文件接口读取。 |
+| Posts/Pages 的草稿与预览 | `src/collections/Posts/`、`src/collections/Pages/` | 公开日记发布与缓存刷新 | 复用草稿、预览、SEO 和重新验证模式。 |
 
 ## 4. 建议的信息架构
 
 ### 4.1 入口与后台交互
 
-首期入口只有 `/admin/collections/diaries`。日记不添加到公开 Header、Footer、搜索、站点地图或任何 `/diary` 前台路由。
+写作入口保持为 `/admin/collections/diaries`。公开展示路由采用与博客一致的模式：
+
+```text
+/diaries                 已发布日记的公开目录与摘要
+/diaries/[slug]          日记详情；访客看到权限提示，管理员看到完整正文
+```
+
+Header 可通过现有全局导航配置添加“日记”链接。草稿日记没有公开 URL；按草稿 slug 访问详情页应返回 404。
 
 Payload Admin 的交互按下列方式配置：
 
-- 编辑页按“正文”和“记录信息”分组；正文置顶，日期、标签、心情、天气、地点置于侧栏或第二个分组。
-- 列表默认按 `entryDate` 降序，展示标题、记录日期、标签和更新时间。
+- 编辑页按“正文”和“记录信息”分组；正文置顶，日期、标签、心情、天气、地点和公开摘要置于侧栏或第二个分组。
+- 发布状态沿用博客的草稿/发布工作流。发布仅公开目录信息，不公开正文。
+- 列表默认按 `entryDate` 降序，展示标题、记录日期、发布状态、标签和更新时间。
 - 标题、日期和标签作为后台筛选入口；正文检索的实现方式在第二期导入导出前确认。
 - 删除采用 Payload 默认确认流程；版本记录保留最近 50 个版本。
 
@@ -59,14 +68,17 @@ Payload Admin 的交互按下列方式配置：
 | --- | --- | --- |
 | `title` | text | 必填；默认值可为当天日期，允许修改。 |
 | `entryDate` | date | 必填且全局唯一；记录发生日期，与 `createdAt` 分开。同一天只能有一篇日记。 |
-| `content` | richText | 必填；首期仅启用段落、加粗、斜体、下划线和外链。 |
+| `_status` | draft/published | Payload 草稿状态；只有已发布日记显示在公开目录。 |
+| `slug` | text | 发布日记必填且唯一；用于 `/diaries/[slug]`。 |
+| `excerpt` | textarea | 必填；管理员手写的公开摘要，访客唯一可见的内容文本。 |
+| `content` | richText | 必填；受保护正文，仅管理员可读取；媒体区块只关联 `DiaryMedia`。 |
 | `tags` | array of text | 可选；同一篇内去重，首期不建立独立标签表。 |
-| `mood` | select | 可选；开心、平静、疲惫、焦虑、难过、愤怒。 |
+| `mood` | select | 可选；后台显示开心、平静、疲惫、焦虑、难过、愤怒；存储和导入值依次为 `happy`、`calm`、`tired`、`anxious`、`sad`、`angry`，以满足 GraphQL 枚举限制。 |
 | `weather` | text | 可选；简短天气描述。 |
 | `location` | text | 可选；地点。 |
 | `createdAt` / `updatedAt` | timestamps | Payload 自动维护。 |
 
-启用 Payload versions：保留最近 50 个版本，支持误删或误改恢复；不启用草稿发布和定时发布，因为私密日记没有“发布”状态。
+启用 Payload versions 和草稿发布：保留最近 50 个版本，支持误删或误改恢复。发布状态只控制目录与摘要是否公开；正文和日记媒体始终只对管理员可见。
 
 `entryDate` 必须由数据库唯一约束保证，而不是只在后台表单中提示。创建同一天的第二篇时，返回明确错误并引导用户编辑已有日记。
 
@@ -74,13 +86,16 @@ Payload Admin 的交互按下列方式配置：
 
 导入目录中的每个 `.md` 文件对应一篇日记；文件名仅用于识别，不参与数据解析。文件开头必须使用 YAML front matter，正文使用 Markdown。完整模板见 [diary-import-template.md](./diary-import-template.md)。
 
-- 必填字段：`title`、`entryDate`、`content`（front matter 结束后的正文）。
-- 可选字段：`tags`、`mood`、`weather`、`location`。
-- `entryDate` 格式固定为 `YYYY-MM-DD`；`mood` 只能使用上述六种值；同一批次和数据库内都不得重复日期。
+- 必填字段：`title`、`entryDate`、`excerpt`、`content`（front matter 结束后的正文）。
+- 可选字段：`slug`、`tags`、`mood`、`weather`、`location`。
+- 导入的日记默认导入为草稿，需由管理员复核摘要后发布；发布不会公开 Markdown 正文。
+- `entryDate` 格式固定为 `YYYY-MM-DD`；`mood` 只能使用 `happy`、`calm`、`tired`、`anxious`、`sad`、`angry`；同一批次和数据库内都不得重复日期。
 - 导入先校验全部文件，再在单个事务中写入；任一文件不合格时不写入任何日记，并返回文件名与字段错误。
 - Markdown 导出使用同一格式，因此导出文件可直接再次导入。
 
 ## 5. 访问控制与隐私架构
+
+本方案是可见性与访问控制，不是端到端加密：日记内容以应用数据库的普通数据保存，由 Payload 权限规则决定谁能读取。已发布日记的标题、日期和摘要公开；正文与 `DiaryMedia` 始终受保护。
 
 ### 5.1 所有者判定
 
@@ -90,20 +105,20 @@ Payload Admin 的交互按下列方式配置：
 
 ### 5.2 后端为唯一权限边界
 
-`diaries` 集合的 `create`、`read`、`update`、`delete` 全部使用 `isDiaryOwner`。REST、GraphQL、Payload Admin 和服务端查询都必须由集合访问控制拒绝非所有者。
+`diaries` 的 `create`、`update`、`delete` 全部使用 `isDiaryOwner`。访客只能读取 `_status = published` 的日记记录，且后端必须只返回 `title`、`entryDate`、`slug` 和 `excerpt` 等公开字段；`content`、标签、心情、天气、地点、版本和日记媒体仅管理员可读取。REST、GraphQL、Payload Admin 和服务端查询都必须执行同一规则。
 
 ```text
-请求 -> Payload JWT 验证 -> isDiaryOwner -> diaries CRUD
-                                  | 否
-                                  +-> 403 / 无结果
+请求 -> 是管理员？ -> 是：全部 diaries 和 DiaryMedia CRUD
+         | 否
+         +-> 仅查询 published diaries 的公开摘要字段
 ```
 
 ### 5.3 防止旁路泄露
 
-- 不把 `diaries` 加入 `searchPlugin`、redirects、SEO、sitemap、公开导航、静态参数生成或 ISR 缓存。
-- 首期不创建前台日记页面。若未来增加，必须动态渲染、返回 `Cache-Control: private, no-store`，并使用 `robots: noindex, nofollow`。这些是纵深防御，核心仍是访问控制。
-- 首期不允许上传文件，也不允许关联 `media`。当前 `Media` 集合的文件位于 `public/media`，即使 Payload API 收紧权限，文件 URL 仍可能公开。
-- 日记不用 Live Preview，也不生成可转发的预览 URL。
+- 仅将已发布日记的标题、日期、`slug` 和 `excerpt` 加入 `searchPlugin`、SEO、sitemap、公开导航和静态参数生成；草稿日记必须从这些位置移除并让 URL 返回 404。
+- `/diaries` 可缓存公开摘要；`/diaries/[slug]` 必须按请求鉴权并使用 `Cache-Control: private, no-store`，避免管理员正文被缓存后返回给访客。
+- `Media` 保持现有公开配置，仅供博客和站点公开资产使用。新增 `DiaryMedia`：`staticDir` 位于 `public/` 之外、集合 `read/create/update/delete` 均使用 `isDiaryOwner`、文件只通过 Payload 的受控文件接口读取。服务器、CDN 和 Nginx 不得直接暴露其存储目录。
+- 公开目录可加入 Header，且可由页面、文章和其他公开内容通过现有内部链接字段引用；链接打开详情页后仍执行正文权限检查。
 - 生产环境仅使用 HTTPS，设置强 `PAYLOAD_SECRET`，并将 `DIARY_OWNER_ID` 放入部署平台的私密环境变量，绝不提交到仓库。
 
 ### 5.4 现有用户权限的前置风险
@@ -112,33 +127,34 @@ Payload Admin 的交互按下列方式配置：
 
 ## 6. 首期用户流程与验收标准
 
-1. 唯一管理员登录 `/admin` 后，能进入“日记”集合。
-2. 新建时默认填入当天日期；保存后可在列表中看到标题、日期、标签和更新时间。
-3. 所有者可按关键词、日期范围和标签检索，打开、修改和删除任意一篇自己的日记。
-4. 未登录用户访问 `/api/diaries` 或 GraphQL 查询时，无法读取任何内容。
-5. 将来新增的非所有者账号访问 REST、GraphQL 和后台操作时，均无法读取或修改任何日记。
-6. 日记标题和正文不出现在 `/search`、网站导航、XML sitemap、公开 HTML、构建产物和 `public/media`。
-7. 修改或删除后可从 Payload 版本记录中恢复最近 50 个版本。
+1. 唯一管理员登录 `/admin` 后，能进入“日记”集合；新建日记默认草稿。
+2. 新建时默认填入当天日期；保存后可在列表中看到标题、日期、发布状态、标签和更新时间。
+3. 管理员可按关键词、日期范围和标签检索，打开、修改和删除任意一篇日记。
+4. 未登录用户访问 `/api/diaries`、GraphQL、`/diaries` 和 `/diaries/[slug]` 时，只能读取已发布日记的公开摘要，无法读取正文、日记媒体和私有元数据。
+5. 已登录的非管理员同样只能读取公开摘要，不能创建、修改或删除日记。
+6. 已发布日记的摘要出现在 `/diaries`、站点导航、搜索和 sitemap；草稿日记不出现在这些位置。
+7. 日记正文媒体只保存在 `DiaryMedia`，无法通过 `public/media` 或静态文件 URL 访问。
+8. 修改或删除后可从 Payload 版本记录中恢复最近 50 个版本。
 
 ## 7. 版本计划与 UI 交互设计
 
-### 第一阶段：私密日记基础
+### 第一阶段：公开目录与受保护正文
 
-实现唯一管理员访问、`diaries` 集合、富文本编辑、可选元数据、自由标签、后台列表和版本恢复。UI 采用 Payload Admin 原生表单与列表，因此无需开发独立页面或视觉设计；本阶段可以立即开始实现。
+实现唯一管理员写作、`diaries` 集合、`DiaryMedia` 集合、富文本编辑、可选元数据、自由标签、草稿发布、后台列表、版本恢复、公开归档和受保护详情页。UI 从现在开始：先完成 Admin 的发布与摘要交互，再完成 `/diaries` 目录和 `/diaries/[slug]` 权限提示/管理员正文两种状态。
 
-### 第二阶段：数据可携带性
+### 第二阶段：数据可携带性（跳过）
 
-实现批量导入、Markdown 导出与一键下载完整备份。一次下载的归档包包含经一致性校验的 SQLite 数据库快照和同一时刻生成的全部 Markdown 导出；不能在数据库写入时直接复制 `.db` 文件。下载响应必须要求所有者身份、禁用缓存并以附件形式保存到使用者设备。
+批量导入、Markdown 导出与一键下载完整备份当前不实现，也不作为后续阶段的前置条件。
 
 ### 第三阶段：日历与统计仪表盘
 
-日历视图、连续记录和统计需要定制 Payload Admin 组件，这才是独立 UI 交互设计的开始。此时先设计三条关键流程：按日期浏览/新建、查看连续记录、按时间范围查看统计；随后再实现组件。
+日历视图、连续记录和统计需要定制 Payload Admin 组件，这才是独立 UI 交互设计的开始。第二阶段已跳过，因此可直接实现三条关键流程：按日期浏览/新建、查看连续记录、按时间范围查看统计。
 
 因此，UI 交互设计现在开始的内容是第一阶段的字段布局和后台列表配置；日历与统计的页面级 UI 设计在第二阶段数据导入导出验收后启动。
 
 ### 第四阶段：文本评论注释
 
-评论注释仅用于日记所有者自己补充想法，不提供回复、提及、分享或其他用户协作。
+评论注释仅用于日记所有者自己补充想法，不提供回复、提及、分享或其他用户协作。即使日记公开，评论注释也只在管理员后台显示。
 
 - 新增私有 `diary-annotations` 集合：关联日记、评论文本、被选中的原文、原文前后上下文和 `createdAt`。`createdAt` 即评论日期，由 Payload 自动维护。
 - 新增与日记相同的 `isDiaryOwner` 访问控制；注释绝不进入公开搜索、导出链接或媒体库。
@@ -157,3 +173,7 @@ Payload Admin 的交互按下列方式配置：
 | v0.1 | 2026-07-28 | 基于现有项目结构完成模块、复用、架构与澄清问题的初稿。 |
 | v0.2 | 2026-07-28 | 采纳 Admin-only、富文本、无附件、可选元数据、自由标签、导入导出、备份和日历统计需求，并拆分实现与 UI 阶段。 |
 | v0.3 | 2026-07-28 | 确认心情枚举、单日单篇、Markdown 导入格式、完整本地备份和后续文本评论注释。 |
+| v0.4 | 2026-07-28 | 将心情的存储与导入值改为 GraphQL 合法的 ASCII 枚举，后台保留中文显示。 |
+| v0.5 | 2026-07-28 | 改为默认私密、可显式公开发布的日记；增加公开归档、详情、链接、搜索、站点地图与公开媒体复用规则。 |
+| v0.6 | 2026-07-29 | 改为公开目录、受保护正文；拆分公开 `Media` 与受保护 `DiaryMedia`。 |
+| v0.7 | 2026-07-29 | 跳过数据导入、导出与备份，第三阶段直接实现 Admin 日记仪表盘。 |
