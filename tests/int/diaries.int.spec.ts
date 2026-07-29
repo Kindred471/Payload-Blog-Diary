@@ -140,6 +140,44 @@ describe('Diaries access control', () => {
     expect(ownerResult.content).toEqual(content)
     expect(ownerResult.tags).toEqual([{ id: expect.any(String), tag: 'private' }])
 
+    const annotation = await payload.create({
+      collection: 'diary-annotations',
+      data: {
+        comment: 'Private note',
+        diary: diary.id,
+        prefix: '',
+        selectedText: 'diary',
+        suffix: '',
+      },
+      overrideAccess: false,
+      req: ownerReq,
+    })
+
+    await expect(
+      payload.find({
+        collection: 'diary-annotations',
+        overrideAccess: false,
+        req: outsiderReq,
+      }),
+    ).rejects.toThrow()
+
+    await expect(
+      payload.create({
+        collection: 'diary-annotations',
+        data: {
+          comment: 'Should not create',
+          diary: diary.id,
+          prefix: '',
+          selectedText: 'diary',
+          suffix: '',
+        },
+        overrideAccess: false,
+        req: outsiderReq,
+      }),
+    ).rejects.toThrow()
+
+    await payload.delete({ collection: 'diary-annotations', id: annotation.id, overrideAccess: true })
+
     await expect(
       payload.update({
         collection: 'diaries',

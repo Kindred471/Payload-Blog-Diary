@@ -72,6 +72,7 @@ export interface Config {
     media: Media;
     'diary-media': DiaryMedia;
     diaries: Diary;
+    'diary-annotations': DiaryAnnotation;
     categories: Category;
     users: User;
     redirects: Redirect;
@@ -96,6 +97,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     'diary-media': DiaryMediaSelect<false> | DiaryMediaSelect<true>;
     diaries: DiariesSelect<false> | DiariesSelect<true>;
+    'diary-annotations': DiaryAnnotationsSelect<false> | DiaryAnnotationsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
@@ -851,6 +853,20 @@ export interface DiaryMedia {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "diary-annotations".
+ */
+export interface DiaryAnnotation {
+  id: number;
+  diary: number | Diary;
+  comment: string;
+  selectedText: string;
+  prefix?: string | null;
+  suffix?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1064,6 +1080,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'diaries';
         value: number | Diary;
+      } | null)
+    | ({
+        relationTo: 'diary-annotations';
+        value: number | DiaryAnnotation;
       } | null)
     | ({
         relationTo: 'categories';
@@ -1436,6 +1456,19 @@ export interface DiariesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "diary-annotations_select".
+ */
+export interface DiaryAnnotationsSelect<T extends boolean = true> {
+  diary?: T;
+  comment?: T;
+  selectedText?: T;
+  prefix?: T;
+  suffix?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

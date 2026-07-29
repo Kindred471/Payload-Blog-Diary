@@ -9,6 +9,7 @@ import {
 } from '@payloadcms/richtext-lexical'
 
 import { diaryOwnerOrPublished, isDiaryOwner } from '@/access/isDiaryOwner'
+import { DiaryAnnotationsFeature } from '@/features/DiaryAnnotations/server'
 import { revalidateDelete, revalidateDiary } from './hooks/revalidateDiary'
 
 const moodOptions = [
@@ -79,6 +80,7 @@ export const Diaries: CollectionConfig = {
               editor: lexicalEditor({
                 features: ({ rootFeatures }) => [
                   ...rootFeatures,
+                  DiaryAnnotationsFeature(),
                   HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
                   UploadFeature({ enabledCollections: ['diary-media'] }),
                   FixedToolbarFeature(),

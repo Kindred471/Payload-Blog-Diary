@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
 import { Diaries } from './collections/Diaries'
+import { DiaryAnnotations } from './collections/DiaryAnnotations'
 import { DiaryMedia } from './collections/DiaryMedia'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
@@ -72,7 +73,7 @@ export default buildConfig({
       url: process.env.DATABASE_URL || '',
     },
   }),
-  collections: [Pages, Posts, Media, DiaryMedia, Diaries, Categories, Users],
+  collections: [Pages, Posts, Media, DiaryMedia, Diaries, DiaryAnnotations, Categories, Users],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins,
