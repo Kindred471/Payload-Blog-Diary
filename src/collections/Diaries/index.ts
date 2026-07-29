@@ -20,6 +20,20 @@ const moodOptions = [
   { label: 'Angry', value: 'angry' },
 ]
 
+const entryDateDefaultValue = ({ req }: { req: { query: Record<string, unknown> } }) => {
+  const entryDate = req.query.entryDate
+
+  if (typeof entryDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(entryDate)) {
+    const date = new Date(`${entryDate}T00:00:00.000Z`)
+
+    if (!Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === entryDate) {
+      return date.toISOString()
+    }
+  }
+
+  return new Date().toISOString()
+}
+
 export const Diaries: CollectionConfig = {
   slug: 'diaries',
   labels: {
@@ -141,7 +155,7 @@ export const Diaries: CollectionConfig = {
       required: true,
       unique: true,
       index: true,
-      defaultValue: () => new Date().toISOString(),
+      defaultValue: entryDateDefaultValue,
       admin: {
         date: {
           pickerAppearance: 'dayOnly',

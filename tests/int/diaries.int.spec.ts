@@ -39,12 +39,14 @@ describe('Diaries access control', () => {
   let ownerID: number
   let outsiderID: number
   let slug: string
+  let entryDate: string
   let previousOwnerID: string | undefined
 
   beforeAll(async () => {
     payload = await getPayload({ config })
     const suffix = Date.now()
     slug = `diary-access-${suffix}`
+    entryDate = new Date(Date.UTC(2100, 0, 1 + (suffix % 1000))).toISOString()
     previousOwnerID = process.env.DIARY_OWNER_ID
 
     const owner = await payload.create({
@@ -109,7 +111,7 @@ describe('Diaries access control', () => {
       data: {
         _status: 'published',
         content,
-        entryDate: '2026-07-29T00:00:00.000Z',
+        entryDate,
         excerpt: 'Public diary summary',
         slug,
         tags: [{ tag: 'private' }],
@@ -157,7 +159,7 @@ describe('Diaries access control', () => {
         data: {
           _status: 'draft',
           content,
-          entryDate: '2026-07-29T00:00:00.000Z',
+          entryDate,
           excerpt: 'Duplicate date',
           slug: `${slug}-duplicate`,
           title: 'Duplicate date',

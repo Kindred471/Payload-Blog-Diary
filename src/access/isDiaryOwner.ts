@@ -1,9 +1,17 @@
 import type { Access, AccessArgs } from 'payload'
 
-export const isDiaryOwner = ({ req }: Pick<AccessArgs, 'req'>): boolean => {
+type DiaryOwnerUser = {
+  id: number | string
+} | null | undefined
+
+export const isDiaryOwnerUser = (user: DiaryOwnerUser): boolean => {
   const ownerID = process.env.DIARY_OWNER_ID
 
-  return Boolean(ownerID && req.user && String(req.user.id) === ownerID)
+  return Boolean(ownerID && user && String(user.id) === ownerID)
+}
+
+export const isDiaryOwner = ({ req }: Pick<AccessArgs, 'req'>): boolean => {
+  return isDiaryOwnerUser(req.user)
 }
 
 export const diaryOwnerOrPublished: Access = ({ req }) => {
